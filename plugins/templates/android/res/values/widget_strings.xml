@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_compact_light_description">MyAgenda pequeno · tema claro</string>
+    <string name="widget_compact_dark_description">MyAgenda pequeno · tema escuro</string>
+    <string name="widget_medium_light_description">MyAgenda médio · tema claro</string>
+    <string name="widget_medium_dark_description">MyAgenda médio · tema escuro</string>
+</resources>

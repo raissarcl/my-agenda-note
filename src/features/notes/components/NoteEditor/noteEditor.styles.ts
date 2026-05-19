@@ -1,0 +1,76 @@
+import { StyleSheet } from 'react-native';
+import type { ThemeTokens } from '../../../../theme';
+
+export function createNoteEditorStyles(tokens: ThemeTokens) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: tokens.bg },
+    scrollFlex: { flex: 1 },
+    scroll: { padding: 16, gap: 10 },
+    hint: { fontSize: 14, lineHeight: 20, color: tokens.textMuted },
+    locationRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      borderColor: tokens.border,
+      backgroundColor: tokens.surface,
+    },
+    locationText: { flex: 1, fontSize: 15, color: tokens.text },
+    titleInput: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 18,
+      fontWeight: '600',
+      color: tokens.text,
+      borderColor: tokens.border,
+      backgroundColor: tokens.surface,
+    },
+    counter: { fontSize: 13 },
+    toolbarRow: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginTop: 4,
+      backgroundColor: tokens.surface,
+      borderColor: tokens.border,
+    },
+    editorShell: {
+      position: 'relative',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 12,
+      overflow: 'hidden',
+      minHeight: 280,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderColor: tokens.border,
+      backgroundColor: tokens.surface,
+    },
+    editorLoadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      zIndex: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: tokens.surface,
+    },
+    rich: { flex: 1, minHeight: 260 },
+    deleteBtn: {
+      marginTop: 16,
+      alignSelf: 'flex-start',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: tokens.danger,
+    },
+    savingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+}
