@@ -20,6 +20,7 @@ import {
   requestPermissionIfNeeded,
 } from '../src/lib/notifications';
 import { syncAndroidWidgets } from '../src/lib/homeScreenWidget';
+import { NoteMovePickerProvider } from '../src/features/notes/components/NoteMovePickerProvider';
 
 configureLocale();
 configureNotificationHandler();
@@ -66,9 +67,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <BootLoadingGate ready={bootReady}>
-          <ThemedStack />
-        </BootLoadingGate>
+        <NoteMovePickerProvider>
+          <BootLoadingGate ready={bootReady}>
+            <ThemedStack />
+          </BootLoadingGate>
+        </NoteMovePickerProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

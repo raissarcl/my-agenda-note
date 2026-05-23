@@ -9,7 +9,7 @@ import { pressOpacity } from '../../../ui/pressable';
 import { moveNotes, previewLineFromNote, type Note, type Notebook } from '../../../lib/notes';
 import { t } from '../../../lib/i18n';
 import { showNoteMovePicker } from '../actions/noteMovePicker';
-import { alertError } from '../actions/noteAlerts';
+import { alertError, showNoteRowOverflowMenu } from '../actions/noteAlerts';
 import { createNoteRowStyles } from '../styles/noteRow.styles';
 
 type Props = {
@@ -100,16 +100,16 @@ export function NoteRow({
         <>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t.notesMove}
-            onPress={handleMove}
+            accessibilityLabel={t.notesMoveTo}
+            onPress={() => showNoteRowOverflowMenu(handleMove)}
             hitSlop={12}
             disabled={busy}
             style={({ pressed }) => [
-              styles.rowIconBtn,
+              styles.menuBtn,
               { opacity: pressOpacity(busy, pressed) },
             ]}
           >
-            <Ionicons name="folder-open-outline" size={22} color={tokens.primary} />
+            <Ionicons name="ellipsis-horizontal" size={22} color={tokens.textMuted} />
           </Pressable>
           <Pressable
             accessibilityRole="button"

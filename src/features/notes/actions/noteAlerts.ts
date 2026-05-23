@@ -22,6 +22,13 @@ export function confirmDeleteMany(count: number, onConfirm: () => void): void {
   );
 }
 
+export function showNoteRowOverflowMenu(onMove: () => void): void {
+  Alert.alert(t.notesMoveTo, undefined, [
+    { text: t.notesMove, onPress: onMove },
+    { text: t.cancel, style: 'cancel' },
+  ]);
+}
+
 export function showNotebookOverflowMenu(router: Router, notebook: Notebook): void {
   Alert.alert(notebook.title.trim() || t.notebookTitlePlaceholder, undefined, [
     {

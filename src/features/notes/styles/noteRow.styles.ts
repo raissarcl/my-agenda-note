@@ -30,6 +30,11 @@ export function createNoteRowStyles(tokens: ThemeTokens) {
       paddingVertical: 8,
       gap: 8,
     },
+    menuBtn: {
+      paddingHorizontal: 8,
+      paddingVertical: 12,
+      justifyContent: 'center',
+    },
     rowIconBtn: {
       paddingHorizontal: 8,
       paddingVertical: 12,
