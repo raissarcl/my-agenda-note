@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../../../theme';
 import { useThemedStyles } from '../../../../hooks/useThemedStyles';
-import { t } from '../../../../lib/i18n';
+import { alertError, t } from '../../../../lib/i18n';
 import {
   NOTE_BODY_PLAIN_MAX,
   loadNotebooks,
@@ -184,7 +184,7 @@ export function useNoteEditor({
       });
       onClose();
     } catch (e) {
-      Alert.alert('Erro', String(e));
+      alertError(e);
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -205,7 +205,7 @@ export function useNoteEditor({
               await removeNote(initialNote.id);
             } catch (e) {
               setDeleting(false);
-              Alert.alert('Erro', String(e));
+              alertError(e);
               return;
             }
             setDeleting(false);

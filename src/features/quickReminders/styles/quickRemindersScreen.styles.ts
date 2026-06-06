@@ -56,6 +56,16 @@ export function createQuickRemindersScreenStyles(tokens: ThemeTokens) {
     toggle: { padding: 2 },
     rowTextPressable: { flex: 1, minWidth: 0 },
     rowText: { fontSize: 16 },
+    rowNotifyHint: { fontSize: 12, lineHeight: 16, marginTop: 4 },
+    notifyPickerBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
     editModalRoot: { flex: 1, justifyContent: 'center', padding: 24 },
     editOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: tokens.overlay },
     editCard: {

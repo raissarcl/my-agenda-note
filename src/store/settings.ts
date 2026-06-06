@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { DEFAULT_SETTINGS, type Settings } from '../types';
+import { scheduleBackupReminderFromSettings } from '../lib/notifications';
 import { buildBlob, loadBlob, saveBlob } from './persistence';
 import { useTasksStore } from './tasks';
 
@@ -22,5 +23,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ settings: next });
     const tasks = useTasksStore.getState().tasks;
     await saveBlob(buildBlob(tasks, next));
+    if (
+      'backupReminderEnabled' in patch ||
+      'backupReminderIntervalDays' in patch
+    ) {
+      await scheduleBackupReminderFromSettings(next);
+    }
   },
 }));

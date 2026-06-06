@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { pressOpacity } from '../../../ui/pressable';
-import { t } from '../../../lib/i18n';
+import { alertError, t } from '../../../lib/i18n';
 import { getNotebook, persistNotebook, type Notebook } from '../../../lib/notes';
 import { createNotebookFormStyles } from '../styles/notebookForm.styles';
 
@@ -70,7 +70,7 @@ export function NotebookFormScreen() {
       await persistNotebook(notebook);
       router.back();
     } catch (e) {
-      Alert.alert('Erro', String(e));
+      alertError(e);
     } finally {
       setSaving(false);
     }

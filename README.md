@@ -8,7 +8,7 @@ App de agenda, calendário e notas em React Native (Expo), focado em uso pessoal
 
 - **Calendário**: mini calendário com feriados brasileiros + lista do mês ou do dia selecionado; botão para ocultar compromissos concluídos
 - **Lista**: compromissos agrupados por dia no mês, busca por título e filtros rápidos
-- **Lembretes**: lembretes rápidos sem data no calendário (reordenáveis)
+- **Lembretes**: lembretes rápidos sem data no calendário (reordenáveis); alerta no telemóvel opcional pelo ícone de sino (sem passo extra ao criar)
 - **Notas**: cadernos e editor de texto rico
 
 ### Compromissos
@@ -26,7 +26,8 @@ App de agenda, calendário e notas em React Native (Expo), focado em uso pessoal
 
 ### Geral
 
-- Backup local: exportar/importar JSON (mesclar ou substituir) — inclui compromissos, notas, lembretes e configurações
+- Backup local: exportar/importar JSON (mesclar ou substituir) — inclui compromissos, notas, lembretes rápidos e configurações
+- Em **Configurações**: data do último backup e lembrete opcional (notificação local) para exportar de novo após 7, 14 ou 30 dias — o export continua manual
 - Tema claro / escuro / sistema
 - Locale pt-BR e hora em formato 24h
 - Widget Android (tela inicial): próximo compromisso + resumo de hoje
@@ -134,5 +135,6 @@ adb install -r android\app\build\outputs\apk\release\app-release.apk
 
 ## Backup recomendado
 
-- Use **Configurações > Exportar JSON** 1x por semana para Drive/Email.
-- Em caso de troca de celular/reinstalação, use **Importar JSON**.
+- Use **Configurações > Exportar JSON** 1x por semana para Drive/Email (a app regista a data do último export).
+- Opcional: ative **Lembrar de exportar backup** para receber um aviso local; toque na notificação abre Configurações.
+- Em caso de troca de celular/reinstalação, use **Importar JSON** (mesclar ou substituir).

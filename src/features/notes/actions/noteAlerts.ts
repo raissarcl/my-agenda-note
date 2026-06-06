@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 import type { Router } from 'expo-router';
 import type { Note, Notebook } from '../../../lib/notes';
-import { t } from '../../../lib/i18n';
+import { alertError, t } from '../../../lib/i18n';
 
 export function confirmDeleteNote(onConfirm: () => void): void {
   Alert.alert(t.notesDelete, t.notesDeleteConfirm, [
@@ -50,9 +50,7 @@ export function alertMoveDone(): void {
   Alert.alert(t.notesMoveDone);
 }
 
-export function alertError(error: unknown): void {
-  Alert.alert('Erro', String(error));
-}
+export { alertError };
 
 type DeleteNotebookAllParams = {
   notebookId: string | undefined;

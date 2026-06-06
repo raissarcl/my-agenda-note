@@ -1,9 +1,11 @@
 import { getDay, isAfter, isBefore } from 'date-fns';
 import {
+  BACKUP_REMINDER_INTERVAL_OPTIONS,
   CURRENT_SCHEMA_VERSION,
   DEFAULT_SETTINGS,
   type PersistedBlob,
   type Recurrence,
+  type Settings,
   type Task,
 } from '../types';
 import { parseISODate } from '../lib/format';
@@ -145,6 +147,26 @@ function normalizeTask(task: LegacyTask, fromVersion: number): Task {
   };
 }
 
+function normalizeSettings(raw: Partial<Settings> | undefined): Settings {
+  const merged: Settings = { ...DEFAULT_SETTINGS, ...(raw ?? {}) };
+  const interval = merged.backupReminderIntervalDays;
+  const backupReminderIntervalDays = (
+    BACKUP_REMINDER_INTERVAL_OPTIONS as readonly number[]
+  ).includes(interval)
+    ? interval
+    : DEFAULT_SETTINGS.backupReminderIntervalDays;
+  const lastExportAt =
+    typeof merged.lastExportAt === 'string' && merged.lastExportAt.length > 0
+      ? merged.lastExportAt
+      : null;
+  return {
+    ...merged,
+    backupReminderEnabled: merged.backupReminderEnabled === true,
+    backupReminderIntervalDays,
+    lastExportAt,
+  };
+}
+
 export function migrateBlob(raw: unknown): PersistedBlob {
   if (!raw || typeof raw !== 'object') {
     return {
@@ -168,10 +190,9 @@ export function migrateBlob(raw: unknown): PersistedBlob {
   const rawTasks = Array.isArray(blob.tasks) ? (blob.tasks as LegacyTask[]) : [];
   const tasks = rawTasks.map((t) => normalizeTask(t, version));
 
-  const settings: PersistedBlob['settings'] = {
-    ...DEFAULT_SETTINGS,
-    ...((blob.settings as Partial<PersistedBlob['settings']>) ?? {}),
-  };
+  const settings = normalizeSettings(
+    blob.settings as Partial<PersistedBlob['settings']> | undefined
+  );
 
   const notes = Array.isArray(blob.notes)
     ? (blob.notes as unknown[])

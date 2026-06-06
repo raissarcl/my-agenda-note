@@ -27,6 +27,16 @@ export function createSettingsScreenStyles(tokens: ThemeTokens) {
     },
     bigBtnText: { fontSize: 15, fontWeight: '500', color: tokens.text },
     hint: { fontSize: 12, marginTop: 4, color: tokens.textMuted },
+    settingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+    },
+    settingRowTitle: { fontSize: 15, fontWeight: '500' },
     busyOverlay: {
       ...StyleSheet.absoluteFillObject,
       justifyContent: 'center',

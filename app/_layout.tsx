@@ -5,7 +5,8 @@ import {
   View,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppState } from 'react-native';
@@ -17,9 +18,16 @@ import { configureLocale, t } from '../src/lib/i18n';
 import {
   configureNotificationHandler,
   ensureAndroidChannel,
+  isBackupReminderNotificationData,
   requestPermissionIfNeeded,
+  syncBackupReminderFromSettings,
+  syncQuickReminderNotifications,
 } from '../src/lib/notifications';
 import { syncAndroidWidgets } from '../src/lib/homeScreenWidget';
+import {
+  loadQuickReminders,
+  saveAllQuickReminders,
+} from '../src/lib/quickReminders';
 import { NoteMovePickerProvider } from '../src/features/notes/components/NoteMovePickerProvider';
 
 configureLocale();
@@ -27,6 +35,7 @@ configureNotificationHandler();
 
 export default function RootLayout() {
   const [bootReady, setBootReady] = useState(false);
+  const router = useRouter();
   const hydrateSettings = useSettingsStore((s) => s.hydrate);
   const hydrateTasks = useTasksStore((s) => s.hydrate);
   const rescheduleAll = useTasksStore((s) => s.rescheduleAll);
@@ -42,11 +51,31 @@ export default function RootLayout() {
         await ensureAndroidChannel();
         await requestPermissionIfNeeded();
         await rescheduleAll();
+        await syncBackupReminderFromSettings();
+        const quick = await loadQuickReminders();
+        const quickSynced = await syncQuickReminderNotifications(quick);
+        if (JSON.stringify(quickSynced) !== JSON.stringify(quick)) {
+          await saveAllQuickReminders(quickSynced);
+        }
       } finally {
         setBootReady(true);
       }
     })();
   }, [hydrateSettings, hydrateTasks, rescheduleAll]);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data as
+          | Record<string, unknown>
+          | undefined;
+        if (isBackupReminderNotificationData(data)) {
+          router.push('/settings');
+        }
+      }
+    );
+    return () => sub.remove();
+  }, [router]);
 
   useEffect(() => {
     if (!tasksHydrated || !settingsHydrated) return;
@@ -58,6 +87,7 @@ export default function RootLayout() {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         void rescheduleAll();
+        void syncBackupReminderFromSettings();
         void syncAndroidWidgets(tasks);
       }
     });

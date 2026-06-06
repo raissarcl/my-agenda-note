@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
@@ -9,9 +17,18 @@ import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { useSettingsStore } from '../../../store/settings';
 import { useTasksStore } from '../../../store/tasks';
 import { exportBackup, importBackup } from '../../../lib/backup';
-import { t, notificationLeadLabel } from '../../../lib/i18n';
+import {
+  alertError,
+  formatLastBackupLabel,
+  notificationLeadLabel,
+  t,
+} from '../../../lib/i18n';
 import { ensureAndroidChannel, requestPermissionIfNeeded } from '../../../lib/notifications';
-import { NOTIFICATION_LEAD_VALUES, type ThemeMode } from '../../../types';
+import {
+  BACKUP_REMINDER_INTERVAL_OPTIONS,
+  NOTIFICATION_LEAD_VALUES,
+  type ThemeMode,
+} from '../../../types';
 import { SettingsSection } from '../components/SettingsSection';
 import { createSettingsScreenStyles } from '../styles/settingsScreen.styles';
 
@@ -43,9 +60,25 @@ export function SettingsScreen() {
         Alert.alert(t.exportSuccess);
       }
     } catch (e) {
-      Alert.alert('Erro', String(e));
+      alertError(e);
     } finally {
       setBusy(null);
+    }
+  };
+
+  const onToggleBackupReminder = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await requestPermissionIfNeeded();
+      if (!granted) {
+        Alert.alert(t.permissionDenied);
+        return;
+      }
+      await ensureAndroidChannel();
+    }
+    try {
+      await update({ backupReminderEnabled: enabled });
+    } catch (e) {
+      alertError(e);
     }
   };
 
@@ -73,7 +106,7 @@ export function SettingsScreen() {
         Alert.alert(t.importInvalid);
       }
     } catch (e) {
-      Alert.alert('Erro', String(e));
+      alertError(e);
     } finally {
       setBusy(null);
     }
@@ -103,7 +136,7 @@ export function SettingsScreen() {
       });
       Alert.alert(t.testNotificationDone);
     } catch (e) {
-      Alert.alert('Erro', String(e));
+      alertError(e);
     } finally {
       setBusy(null);
     }
@@ -184,6 +217,68 @@ export function SettingsScreen() {
 
         <SettingsSection title={t.data} subtitle={t.backupDataHint}>
           <View style={{ gap: 8 }}>
+            <Text style={styles.hint}>{formatLastBackupLabel(settings.lastExportAt)}</Text>
+            <View
+              style={[
+                styles.settingRow,
+                {
+                  borderColor: tokens.border,
+                  backgroundColor: tokens.surfaceAlt,
+                },
+              ]}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[styles.settingRowTitle, { color: tokens.text }]}>
+                  {t.backupReminder}
+                </Text>
+                <Text style={styles.hint}>{t.backupReminderHint}</Text>
+              </View>
+              <Switch
+                value={settings.backupReminderEnabled}
+                onValueChange={(v) => void onToggleBackupReminder(v)}
+                disabled={busy !== null}
+              />
+            </View>
+            {settings.backupReminderEnabled ? (
+              <View style={{ gap: 6 }}>
+                <Text style={[styles.hint, { marginTop: 0 }]}>
+                  {t.backupReminderInterval}
+                </Text>
+                <View style={styles.chipRow}>
+                  {BACKUP_REMINDER_INTERVAL_OPTIONS.map((days) => {
+                    const active = settings.backupReminderIntervalDays === days;
+                    return (
+                      <Pressable
+                        key={days}
+                        onPress={() =>
+                          void update({ backupReminderIntervalDays: days })
+                        }
+                        disabled={busy !== null}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: active
+                              ? tokens.primary
+                              : tokens.surfaceAlt,
+                            borderColor: active ? tokens.primary : tokens.border,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            color: active ? tokens.primaryText : tokens.text,
+                            fontSize: 13,
+                            fontWeight: active ? '600' : '500',
+                          }}
+                        >
+                          {days}d
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
             <Pressable
               onPress={() => void onExport()}
               disabled={busy !== null}

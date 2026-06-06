@@ -5,6 +5,8 @@ export type QuickReminder = {
   text: string;
   done: boolean;
   createdAt: string;
+  notifyAt: string | null;
+  notificationIds: string[];
 };
 
 export const QUICK_REMINDERS_STORAGE_KEY =
@@ -31,11 +33,18 @@ export function sanitizeQuickReminderList(raw: unknown[]): QuickReminder[] {
     ) {
       continue;
     }
+    const notifyAt =
+      typeof o.notifyAt === 'string' && o.notifyAt.length > 0 ? o.notifyAt : null;
+    const notificationIds = Array.isArray(o.notificationIds)
+      ? (o.notificationIds as unknown[]).filter((x): x is string => typeof x === 'string')
+      : [];
     out.push({
       id: o.id,
       text: o.text,
       done,
       createdAt: o.createdAt,
+      notifyAt,
+      notificationIds,
     });
   }
   return out;

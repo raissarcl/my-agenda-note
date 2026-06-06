@@ -17,6 +17,7 @@ import {
   type Notebook,
 } from './notes';
 import { loadQuickReminders, saveAllQuickReminders } from './quickReminders';
+import { syncBackupReminderFromSettings } from './notifications';
 
 export async function buildExportBlob(): Promise<PersistedBlob> {
   const tasks = useTasksStore.getState().tasks;
@@ -50,9 +51,14 @@ export async function exportBackup(): Promise<{ shared: boolean }> {
       dialogTitle: 'Exportar backup',
       UTI: 'public.json',
     });
-    return { shared: true };
   }
-  return { shared: false };
+
+  await useSettingsStore.getState().update({
+    lastExportAt: new Date().toISOString(),
+  });
+  await syncBackupReminderFromSettings();
+
+  return { shared: available };
 }
 
 export type ImportResult =

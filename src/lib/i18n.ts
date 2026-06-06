@@ -1,3 +1,6 @@
+import { differenceInCalendarDays, format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Alert } from 'react-native';
 import { LocaleConfig } from 'react-native-calendars';
 import type { Recurrence } from '../types';
 
@@ -133,6 +136,18 @@ export const t = {
   backupDataHint:
     'O ficheiro inclui compromissos (com lembretes agendados), definições da app, notas e lembretes rápidos da aba Lembretes.',
   exportSuccess: 'Backup compartilhado.',
+  lastBackupNever: 'Último backup: nunca',
+  lastBackupToday: 'Último backup: hoje',
+  lastBackupDaysAgo: 'Último backup: há {days} dias',
+  backupReminder: 'Lembrar de exportar backup',
+  backupReminderHint:
+    'Notificação local para exportar o JSON. O export continua manual em Configurações.',
+  backupReminderInterval: 'Intervalo do lembrete',
+  backupReminderNotificationTitle: 'Hora de fazer backup',
+  backupReminderNotificationBody:
+    'Exporte o JSON em Configurações para guardar compromissos, notas e lembretes.',
+  errorTitle: 'Erro',
+  errorGeneric: 'Ocorreu um erro. Tente novamente.',
   importSuccess: 'Importação concluída.',
   importSuccessCounts:
     'Compromissos: {tasks} · Notas: {notes} · Lembretes rápidos: {quick}',
@@ -178,13 +193,21 @@ export const t = {
   showCompletedOccurrences: 'Mostrar concluídos',
   monthActions: 'Ações do mês',
   quickRemindersTabHint:
-    'Lembretes sem data. Segure o texto para editar.',
+    'Lembretes sem data. Segure o texto para editar. Alerta é opcional (sino).',
   quickRemindersReorderA11y: 'Segure para arrastar e reordenar',
   quickRemindersPlaceholder: 'Escreva um lembrete...',
   quickRemindersEmpty: 'Sem lembretes.',
   quickRemindersEditTitle: 'Editar lembrete',
+  quickRemindersNotifyHint: 'Toque no sino para lembrar (opcional).',
+  quickRemindersNotifyTitle: 'Alerta',
+  quickRemindersNotifySchedule: 'Agendar',
+  quickRemindersNotifyRemove: 'Remover alerta',
+  quickRemindersNotifyPast: 'Escolha uma data e hora futuras.',
+  quickReminderNotificationBody: 'Lembrete rápido',
+  quickRemindersNotifyA11y: 'Agendar ou alterar alerta',
+  quickRemindersNotifyScheduled: 'Alerta: {when}',
   notesTabHint:
-    'Ao editar, use a barra inferior: negrito, itálico, listas, títulos e mais.',
+    'Ao editar, use a barra inferior para opções.',
   notesEmptyList: 'Nenhuma nota ainda. Toque em + para criar.',
   newNote: 'Nova nota',
   editNote: 'Editar nota',
@@ -236,6 +259,32 @@ export const t = {
   notificationLead60: '1 hora antes',
   notificationLead1440: '1 dia antes',
 };
+
+export function formatQuickReminderNotifyWhen(notifyAtIso: string): string {
+  try {
+    const d = parseISO(notifyAtIso);
+    return format(d, "d/MM 'às' HH:mm", { locale: ptBR });
+  } catch {
+    return '';
+  }
+}
+
+export function formatLastBackupLabel(iso: string | null): string {
+  if (!iso) return t.lastBackupNever;
+  try {
+    const days = differenceInCalendarDays(new Date(), parseISO(iso));
+    if (days <= 0) return t.lastBackupToday;
+    return t.lastBackupDaysAgo.replace('{days}', String(days));
+  } catch {
+    return t.lastBackupNever;
+  }
+}
+
+export function alertError(error: unknown): void {
+  const detail =
+    error instanceof Error ? error.message : error != null ? String(error) : '';
+  Alert.alert(t.errorTitle, detail || t.errorGeneric);
+}
 
 export function notificationStrongFollowupBody(
   taskTitle: string,

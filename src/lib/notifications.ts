@@ -1,7 +1,9 @@
 import * as Notifications from 'expo-notifications';
-import { format } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { Platform } from 'react-native';
-import type { Task } from '../types';
+import type { Settings, Task } from '../types';
+import type { QuickReminder } from './quickReminders';
+import { useSettingsStore } from '../store/settings';
 import { combineDateTime, formatDateISOLocal } from './format';
 import { notificationStrongFollowupBody, t } from './i18n';
 import { nextOccurrencesForScheduling } from './recurrence';
@@ -10,6 +12,9 @@ import { isOccurrenceDone } from './taskCompletion';
 const MAX_SCHEDULED_PER_TASK = 732;
 const CHANNEL_NORMAL_ID = 'mycalendar-alerts-normal-v1';
 const CHANNEL_STRONG_ID = 'mycalendar-alerts-strong-v2';
+const CHANNEL_BACKUP_REMINDER_ID = 'mycalendar-backup-reminder';
+const BACKUP_REMINDER_DATA_TYPE = 'backupReminder';
+const QUICK_REMINDER_DATA_TYPE = 'quickReminder';
 const STRONG_FOLLOWUP_MINUTES = 10;
 
 let configured = false;
@@ -46,6 +51,70 @@ export async function ensureAndroidChannel() {
     lightColor: '#ef4444',
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   });
+  await Notifications.setNotificationChannelAsync(CHANNEL_BACKUP_REMINDER_ID, {
+    name: 'Lembrete de backup',
+    importance: Notifications.AndroidImportance.DEFAULT,
+    sound: 'default',
+    enableVibrate: true,
+    vibrationPattern: [0, 200, 120, 200],
+    lightColor: '#3b82f6',
+  });
+}
+
+export async function cancelBackupReminderNotifications(): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    for (const req of all) {
+      const data = req.content.data as Record<string, unknown> | undefined;
+      if (data?.type === BACKUP_REMINDER_DATA_TYPE) {
+        try {
+          await Notifications.cancelScheduledNotificationAsync(req.identifier);
+        } catch {}
+      }
+    }
+  } catch {}
+}
+
+export async function scheduleBackupReminderFromSettings(
+  settings: Settings
+): Promise<void> {
+  await cancelBackupReminderNotifications();
+  if (!settings.backupReminderEnabled) return;
+
+  const granted = await requestPermissionIfNeeded();
+  if (!granted) return;
+  await ensureAndroidChannel();
+
+  const fireAt = addDays(new Date(), settings.backupReminderIntervalDays);
+  if (fireAt.getTime() <= Date.now() + 1000) return;
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: t.backupReminderNotificationTitle,
+        body: t.backupReminderNotificationBody,
+        data: { type: BACKUP_REMINDER_DATA_TYPE },
+        sound: 'default',
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: fireAt,
+        channelId: CHANNEL_BACKUP_REMINDER_ID,
+      } as Notifications.DateTriggerInput,
+    });
+  } catch {}
+}
+
+export async function syncBackupReminderFromSettings(): Promise<void> {
+  const settings = useSettingsStore.getState().settings;
+  await scheduleBackupReminderFromSettings(settings);
+}
+
+export function isBackupReminderNotificationData(
+  data: Record<string, unknown> | undefined
+): boolean {
+  return data?.type === BACKUP_REMINDER_DATA_TYPE;
 }
 
 export async function requestPermissionIfNeeded(): Promise<boolean> {
@@ -212,4 +281,82 @@ export async function cancelAllNotifications(): Promise<void> {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch {}
+}
+
+async function cancelScheduledQuickReminderNotifications(
+  quickReminderId: string
+): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    for (const req of all) {
+      const data = req.content.data as Record<string, unknown> | undefined;
+      if (data?.type === QUICK_REMINDER_DATA_TYPE && data.quickReminderId === quickReminderId) {
+        try {
+          await Notifications.cancelScheduledNotificationAsync(req.identifier);
+        } catch {}
+      }
+    }
+  } catch {}
+}
+
+export async function cancelQuickReminderNotifications(
+  item: QuickReminder
+): Promise<void> {
+  await cancelScheduledQuickReminderNotifications(item.id);
+  for (const id of item.notificationIds) {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(id);
+    } catch {}
+  }
+}
+
+export async function scheduleQuickReminderNotification(
+  item: QuickReminder
+): Promise<string[]> {
+  if (item.done || !item.notifyAt) return [];
+
+  const granted = await requestPermissionIfNeeded();
+  if (!granted) return [];
+  await ensureAndroidChannel();
+
+  const fireAt = new Date(item.notifyAt);
+  const now = new Date();
+  if (fireAt.getTime() <= now.getTime() + 1000) return [];
+
+  try {
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: item.text,
+        body: t.quickReminderNotificationBody,
+        data: { type: QUICK_REMINDER_DATA_TYPE, quickReminderId: item.id },
+        sound: 'default',
+        priority: Notifications.AndroidNotificationPriority.MAX,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: fireAt,
+        channelId: CHANNEL_NORMAL_ID,
+      } as Notifications.DateTriggerInput,
+    });
+    return [id];
+  } catch {
+    return [];
+  }
+}
+
+export async function syncQuickReminderNotifications(
+  items: QuickReminder[]
+): Promise<QuickReminder[]> {
+  const out: QuickReminder[] = [];
+  for (const item of items) {
+    if (item.done || !item.notifyAt) {
+      await cancelQuickReminderNotifications(item);
+      out.push({ ...item, notificationIds: [] });
+      continue;
+    }
+    await cancelQuickReminderNotifications(item);
+    const notificationIds = await scheduleQuickReminderNotification(item);
+    out.push({ ...item, notificationIds });
+  }
+  return out;
 }

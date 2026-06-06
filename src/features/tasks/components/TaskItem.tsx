@@ -20,7 +20,7 @@ import {
   getTimeBucketLabel,
   getTimeBucketStyles,
 } from '../../../lib/timeBuckets';
-import { formatTaskCountdown, t } from '../../../lib/i18n';
+import { alertError, formatTaskCountdown, t } from '../../../lib/i18n';
 import { taskTagColor, taskTagLabel } from '../../../lib/taskTags';
 import { isOccurrenceDone } from '../../../lib/taskCompletion';
 import type { TaskOccurrence } from '../../../types';
@@ -77,7 +77,7 @@ export function TaskItem({ occurrence, showDate = true }: Props) {
           setDeleteBusy(true);
           void remove(occurrence.id)
             .then(() => swipeRef.current?.close())
-            .catch((e) => Alert.alert('Erro', String(e)))
+            .catch((e) => alertError(e))
             .finally(() => setDeleteBusy(false));
         },
       },

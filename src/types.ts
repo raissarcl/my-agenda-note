@@ -48,6 +48,9 @@ export type Settings = {
   defaultReminderLeadMinutes: number | null;
   locale: 'pt-BR' | 'en-US';
   hideCompletedOccurrences: boolean;
+  lastExportAt: string | null;
+  backupReminderEnabled: boolean;
+  backupReminderIntervalDays: number;
 };
 
 export type PersistedBlob = {
@@ -59,13 +62,18 @@ export type PersistedBlob = {
   quickReminders?: QuickReminder[];
 };
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
+
+export const BACKUP_REMINDER_INTERVAL_OPTIONS = [7, 14, 30] as const;
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   defaultReminderLeadMinutes: 10,
   locale: 'pt-BR',
   hideCompletedOccurrences: false,
+  lastExportAt: null,
+  backupReminderEnabled: false,
+  backupReminderIntervalDays: 7,
 };
 
 export const NOTIFICATION_LEAD_VALUES: Array<number | null> = [
