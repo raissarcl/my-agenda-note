@@ -112,12 +112,33 @@ export function CombinedScreen() {
     void updateSettings({ hideCompletedOccurrences: false });
   }, [updateSettings]);
 
+  const clearDaySelection = useCallback(() => {
+    setSelected(null);
+  }, []);
+
   const goToday = useCallback(() => {
     const d = new Date();
     setYear(d.getFullYear());
     setMonthIndex(d.getMonth());
-    setSelected(null);
-  }, []);
+    clearDaySelection();
+  }, [clearDaySelection]);
+
+  const goToMonth = useCallback(
+    (y: number, m: number) => {
+      setYear(y);
+      setMonthIndex(m);
+      clearDaySelection();
+    },
+    [clearDaySelection]
+  );
+
+  const goMonthByDelta = useCallback(
+    (delta: -1 | 1) => {
+      navigateMonth(setYear, setMonthIndex, year, monthIndex, delta);
+      clearDaySelection();
+    },
+    [year, monthIndex, clearDaySelection]
+  );
 
   const openNewTask = () => {
     router.push({
@@ -131,14 +152,10 @@ export function CombinedScreen() {
       <MonthHeader
         year={year}
         monthIndex={monthIndex}
-        onPrev={() => navigateMonth(setYear, setMonthIndex, year, monthIndex, -1)}
-        onNext={() => navigateMonth(setYear, setMonthIndex, year, monthIndex, 1)}
+        onPrev={() => goMonthByDelta(-1)}
+        onNext={() => goMonthByDelta(1)}
         onToday={goToday}
-        onSelectMonthYear={(y, m) => {
-          setYear(y);
-          setMonthIndex(m);
-          setSelected(null);
-        }}
+        onSelectMonthYear={goToMonth}
         trailing={
           <HideCompletedToggle
             active={hideCompleted}
@@ -155,11 +172,7 @@ export function CombinedScreen() {
         holidaysByDate={holidaysInMonth}
         selectedDate={selected ?? undefined}
         onSelectDate={(d) => setSelected((cur) => (cur === d ? null : d))}
-        onMonthChange={(y, m) => {
-          setYear(y);
-          setMonthIndex(m);
-          setSelected(null);
-        }}
+        onMonthChange={goToMonth}
       />
       <View style={[styles.divider, { backgroundColor: tokens.border }]} />
       <FlatList
