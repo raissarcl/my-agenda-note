@@ -4,7 +4,7 @@ import android.content.Context
 import org.json.JSONObject
 import java.io.File
 
-data class WidgetNext(val meta: String, val title: String)
+data class WidgetNext(val meta: String, val title: String, val whenMs: Long)
 
 data class WidgetRow(val meta: String, val title: String, val deepLink: String)
 
@@ -50,7 +50,8 @@ object WidgetPayloadStore {
     val next = if (nextObj != null) {
       WidgetNext(
         nextObj.optString("meta", ""),
-        nextObj.optString("title", "")
+        nextObj.optString("title", ""),
+        nextObj.optLong("whenMs", 0L)
       )
     } else null
     val rowsArr = o.optJSONArray("rows")

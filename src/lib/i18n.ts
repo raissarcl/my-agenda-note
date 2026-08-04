@@ -160,11 +160,11 @@ export const t = {
   validationRecurrenceEndMax:
     'A repetição não pode passar de 1 ano após a data inicial. Crie outro compromisso se precisar de mais tempo.',
   validationPastInline:
-    'Este horário já passou. Você ainda pode salvar como registro.',
+    'Este horário já passou. Será salvo como concluído.',
   validationPastTitle: 'Data/hora no passado',
   validationPastMessage:
-    'Você está criando uma tarefa para um horário anterior ao atual. Deseja continuar?',
-  validationPastContinue: 'Salvar mesmo assim',
+    'Você está salvando um compromisso no passado. Ele será registrado já como concluído.',
+  validationPastContinue: 'Salvar como concluído',
   occurrenceBadge: 'Repetição',
   pastBadge: 'Passada',
   doneBadge: 'Concluída',

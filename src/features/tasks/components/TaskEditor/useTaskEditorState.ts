@@ -23,6 +23,60 @@ import type { AlertMode, Recurrence, Task, TaskTagId } from '../../../../types';
 import type { TaskEditorProps } from './types';
 import { taskEditorSwitchColors } from './taskEditorSwitch';
 
+function isDateTimePast(allDay: boolean, date: string, time: string): boolean {
+  if (allDay) return date < todayISO();
+  return combineDateTime(date, time).getTime() < Date.now();
+}
+
+function didRescheduleOneOff(
+  existing: Task,
+  date: string,
+  time: string,
+  allDay: boolean
+): boolean {
+  return (
+    date !== existing.date ||
+    time !== existing.time ||
+    allDay !== existing.allDay
+  );
+}
+
+function resolveOneOffDone(args: {
+  past: boolean;
+  rescheduledToFuture: boolean;
+  done: boolean;
+}): boolean {
+  if (args.past) return true;
+  if (args.rescheduledToFuture) return false;
+  return args.done;
+}
+
+function resolveCompletedDates(args: {
+  recurrence: Recurrence;
+  date: string;
+  past: boolean;
+  done: boolean;
+  effectiveDone: boolean;
+  existing: Task | null;
+  modeKind: 'new' | 'edit';
+}): string[] {
+  const { recurrence, date, past, done, effectiveDone, existing, modeKind } = args;
+
+  if (recurrence === 'none') {
+    return effectiveDone ? [date] : [];
+  }
+
+  if (modeKind === 'new' || !existing) {
+    return past ? [date] : [];
+  }
+
+  const completed = new Set(existing.completedOccurrenceDates);
+  if (existing.date !== date) completed.delete(existing.date);
+  if (done || past) completed.add(date);
+  else completed.delete(date);
+  return [...completed].sort();
+}
+
 export function useTaskEditorState({ mode, onClose }: TaskEditorProps) {
   const { tokens, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -127,6 +181,24 @@ export function useTaskEditorState({ mode, onClose }: TaskEditorProps) {
   }, [mode.kind, existing, date]);
 
   useEffect(() => {
+    if (recurrence !== 'none') return;
+
+    if (isDateTimePast(allDay, date, time)) {
+      setDone(true);
+      return;
+    }
+
+    if (!existing) {
+      setDone(false);
+      return;
+    }
+
+    if (didRescheduleOneOff(existing, date, time, allDay)) {
+      setDone(false);
+    }
+  }, [recurrence, allDay, date, time, existing]);
+
+  useEffect(() => {
     if (!busy) return;
     setShowDate(false);
     setShowTime(false);
@@ -191,12 +263,10 @@ export function useTaskEditorState({ mode, onClose }: TaskEditorProps) {
     return null;
   }, [title, recurrenceEnd, date, recurrence, customWeekdays.length]);
 
-  const isPastSelection = useMemo(() => {
-    if (done) return false;
-    const now = new Date();
-    if (allDay) return date < todayISO();
-    return combineDateTime(date, time).getTime() < now.getTime();
-  }, [allDay, date, time, done]);
+  const isPastSelection = useMemo(
+    () => isDateTimePast(allDay, date, time),
+    [allDay, date, time]
+  );
 
   const buildPayload = (): Omit<
     Task,
@@ -206,15 +276,29 @@ export function useTaskEditorState({ mode, onClose }: TaskEditorProps) {
       recurrence === 'custom'
         ? [...new Set(customWeekdays.filter((n) => n >= 0 && n <= 6))].sort((a, b) => a - b)
         : [];
-    const completedForSave = (() => {
-      if (recurrence === 'none') return done ? [date] : [];
-      if (!existing) return [] as string[];
-      const s = new Set(existing.completedOccurrenceDates);
-      if (existing.date !== date) s.delete(existing.date);
-      if (done) s.add(date);
-      else s.delete(date);
-      return [...s].sort();
-    })();
+
+    const past = isDateTimePast(allDay, date, time);
+    const rescheduledToFuture =
+      !!existing &&
+      recurrence === 'none' &&
+      !past &&
+      didRescheduleOneOff(existing, date, time, allDay);
+
+    const effectiveDone =
+      recurrence === 'none'
+        ? resolveOneOffDone({ past, rescheduledToFuture, done })
+        : false;
+
+    const completedOccurrenceDates = resolveCompletedDates({
+      recurrence,
+      date,
+      past,
+      done,
+      effectiveDone,
+      existing,
+      modeKind: mode.kind,
+    });
+
     const recurrenceEndValue =
       recurrence === 'none'
         ? undefined
@@ -230,15 +314,8 @@ export function useTaskEditorState({ mode, onClose }: TaskEditorProps) {
       recurrenceEnd: recurrenceEndValue,
       reminderLeadMinutes: allDay ? null : reminderLead,
       alertMode: allDay ? 'normal' : alertMode,
-      done: recurrence === 'none' ? done : false,
-      completedOccurrenceDates:
-        mode.kind === 'edit'
-          ? completedForSave
-          : recurrence === 'none'
-            ? done
-              ? [date]
-              : []
-            : [],
+      done: effectiveDone,
+      completedOccurrenceDates,
       notificationsPaused,
       notificationsPausedUntil: notificationsPaused ? notificationsPausedUntil : null,
       customWeekdays: recurrence === 'custom' ? sortedWeekdays : [],

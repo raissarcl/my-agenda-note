@@ -33,13 +33,17 @@ object WidgetViewBuilder {
       rv.setTextViewText(R.id.brand, payload.brandTitle)
       rv.setTextViewText(R.id.month_title, payload.monthTitle)
       rv.setTextViewText(R.id.month_stats, payload.monthStats)
-      if (payload.next != null) {
+      val next = payload.next
+      if (
+        next != null &&
+        (next.whenMs <= 0L || next.whenMs >= System.currentTimeMillis())
+      ) {
         rv.setViewVisibility(R.id.next_label, View.VISIBLE)
         rv.setViewVisibility(R.id.next_meta, View.VISIBLE)
         rv.setViewVisibility(R.id.next_title, View.VISIBLE)
         rv.setTextViewText(R.id.next_label, payload.nextLabel)
-        rv.setTextViewText(R.id.next_meta, payload.next.meta)
-        rv.setTextViewText(R.id.next_title, payload.next.title)
+        rv.setTextViewText(R.id.next_meta, next.meta)
+        rv.setTextViewText(R.id.next_title, next.title)
       } else {
         rv.setViewVisibility(R.id.next_label, View.GONE)
         rv.setViewVisibility(R.id.next_meta, View.GONE)

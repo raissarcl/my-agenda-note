@@ -77,6 +77,21 @@ function withTaskDefaults(
   };
 }
 
+async function commitTasksWithAutoComplete(
+  tasks: Task[],
+  focusId: string
+): Promise<{ tasks: Task[]; focused: Task }> {
+  const withAuto = applyAutoCompletedOccurrences(tasks, new Date());
+  const focusedBase = withAuto.find((t) => t.id === focusId);
+  if (!focusedBase) {
+    throw new Error(`commitTasksWithAutoComplete: task ${focusId} not found`);
+  }
+  const ids = await scheduleTaskNotifications(focusedBase);
+  const focused: Task = { ...focusedBase, notificationIds: ids };
+  const nextTasks = withAuto.map((t) => (t.id === focusId ? focused : t));
+  return { tasks: nextTasks, focused };
+}
+
 export const useTasksStore = create<TasksState>((set, get) => ({
   tasks: [],
   hydrated: false,
@@ -119,13 +134,14 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       updatedAt: now,
       ...normalized,
     };
-    const ids = await scheduleTaskNotifications(task);
-    const finalTask: Task = { ...task, notificationIds: ids };
-    const tasks = [...get().tasks, finalTask];
+    const { tasks, focused } = await commitTasksWithAutoComplete(
+      [...get().tasks, task],
+      id
+    );
     set({ tasks });
     await persist(tasks);
     await syncAndroidWidgets(tasks);
-    return finalTask;
+    return focused;
   },
   update: async (id, patch) => {
     const existing = get().tasks.find((t) => t.id === id);
@@ -149,9 +165,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       id: existing.id,
       updatedAt: new Date().toISOString(),
     };
-    const ids = await scheduleTaskNotifications(next);
-    next.notificationIds = ids;
-    const tasks = get().tasks.map((t) => (t.id === id ? next : t));
+    const provisional = get().tasks.map((t) => (t.id === id ? next : t));
+    const { tasks } = await commitTasksWithAutoComplete(provisional, id);
     set({ tasks });
     await persist(tasks);
     await syncAndroidWidgets(tasks);

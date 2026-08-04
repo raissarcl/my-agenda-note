@@ -20,6 +20,12 @@ export type WidgetPayloadRow = {
   deepLink: string;
 };
 
+export type WidgetNextStack = {
+  meta: string;
+  title: string;
+  whenMs: number;
+};
+
 export type WidgetPayload = {
   phase: WidgetPayloadPhase;
   brandTitle: string;
@@ -29,7 +35,7 @@ export type WidgetPayload = {
   monthTitle: string;
   monthStats: string;
   nextLabel: string;
-  next: { meta: string; title: string } | null;
+  next: WidgetNextStack | null;
   listHintCompact: string;
   listHintMedium: string;
   openAppUrl: string;
@@ -61,7 +67,7 @@ function resolveNextTask(tasks: Task[], now: Date): NextItem | null {
 
   const todayISO = formatDateISOLocal(now);
   for (const task of tasks) {
-    if (notificationsSuppressedForTask(task, todayISO) || task.reminderLeadMinutes === null) {
+    if (notificationsSuppressedForTask(task, todayISO)) {
       continue;
     }
     if (task.done && task.recurrence !== 'none') continue;
@@ -99,14 +105,14 @@ function monthPendingOccurrences(tasks: Task[], now: Date): TaskOccurrence[] {
   );
 }
 
-function nextEventStack(next: NextItem | null): { meta: string; title: string } | null {
+function nextEventStack(next: NextItem | null): WidgetNextStack | null {
   if (!next) return null;
   const timePart =
     next.timeLabel === 'Dia inteiro' ? 'dia todo' : formatTime24(next.timeLabel);
   const meta = `${formatDayMonth(next.dateISO)} · ${timePart}`;
   const title =
     next.title.length > 48 ? `${next.title.slice(0, 46)}…` : next.title;
-  return { meta, title };
+  return { meta, title, whenMs: next.whenMs };
 }
 
 function truncateTitle(s: string, max: number): string {
