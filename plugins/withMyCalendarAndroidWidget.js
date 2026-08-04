@@ -202,6 +202,11 @@ function withWidgetManifest(config) {
       },
     });
 
+    // Wipe on uninstall / no silent restore on reinstall — restore only via Import JSON.
+    app.$['android:allowBackup'] = 'false';
+    app.$['android:fullBackupContent'] = '@xml/backup_rules';
+    app.$['android:dataExtractionRules'] = '@xml/data_extraction_rules';
+
     return cfg;
   });
 }
@@ -239,5 +244,5 @@ module.exports = createRunOncePlugin(
     return config;
   },
   'withMyCalendarAndroidWidget',
-  '1.0.0'
+  '1.1.0'
 );

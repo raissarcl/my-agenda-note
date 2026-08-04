@@ -128,6 +128,7 @@ export async function loadNotesStore(): Promise<NotesStore> {
               .filter(isNote)
               .map((n) => normalizeNote(n as Record<string, unknown>))
           : [];
+        void AsyncStorage.removeItem(NOTES_STORAGE_KEY_V1);
         return { notebooks: sortNotebooks(notebooks), notes: sortNotes(notes) };
       }
     }
@@ -136,6 +137,7 @@ export async function loadNotesStore(): Promise<NotesStore> {
   const migrated = await loadV1Notes();
   const store: NotesStore = { notebooks: [], notes: migrated };
   await saveNotesStore(store);
+  await AsyncStorage.removeItem(NOTES_STORAGE_KEY_V1);
   return store;
 }
 

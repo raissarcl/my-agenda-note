@@ -53,6 +53,10 @@ export async function exportBackup(): Promise<{ shared: boolean }> {
     });
   }
 
+  try {
+    await FileSystem.deleteAsync(uri, { idempotent: true });
+  } catch {}
+
   await useSettingsStore.getState().update({
     lastExportAt: new Date().toISOString(),
   });
