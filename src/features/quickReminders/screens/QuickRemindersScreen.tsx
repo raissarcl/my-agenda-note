@@ -18,7 +18,10 @@ import DraggableFlatList, {
 import { useTheme } from '../../../theme';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { formatQuickReminderNotifyWhen, t } from '../../../lib/i18n';
-import { syncQuickReminderNotifications } from '../../../lib/notifications';
+import {
+  cancelQuickReminderNotifications,
+  syncQuickReminderNotifications,
+} from '../../../lib/notifications';
 import {
   loadQuickReminders,
   saveAllQuickReminders,
@@ -118,6 +121,8 @@ export function QuickRemindersScreen() {
     (id: string) => {
       if (justCreatedId === id) setJustCreatedId(null);
       setItems((prev) => {
+        const removed = prev.find((item) => item.id === id);
+        if (removed) void cancelQuickReminderNotifications(removed);
         const next = prev.filter((item) => item.id !== id);
         void persistWithNotifications(next);
         return next;

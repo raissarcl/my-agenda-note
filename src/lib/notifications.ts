@@ -344,9 +344,30 @@ export async function scheduleQuickReminderNotification(
   }
 }
 
+async function cancelOrphanQuickReminderNotifications(
+  keepIds: Set<string>
+): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    for (const req of all) {
+      const data = req.content.data as Record<string, unknown> | undefined;
+      if (data?.type !== QUICK_REMINDER_DATA_TYPE) continue;
+      const quickReminderId = data.quickReminderId;
+      if (typeof quickReminderId !== 'string' || keepIds.has(quickReminderId)) {
+        continue;
+      }
+      try {
+        await Notifications.cancelScheduledNotificationAsync(req.identifier);
+      } catch {}
+    }
+  } catch {}
+}
+
 export async function syncQuickReminderNotifications(
   items: QuickReminder[]
 ): Promise<QuickReminder[]> {
+  await cancelOrphanQuickReminderNotifications(new Set(items.map((i) => i.id)));
+
   const out: QuickReminder[] = [];
   for (const item of items) {
     if (item.done || !item.notifyAt) {

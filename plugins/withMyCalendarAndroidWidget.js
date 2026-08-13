@@ -207,6 +207,23 @@ function withWidgetManifest(config) {
     app.$['android:fullBackupContent'] = '@xml/backup_rules';
     app.$['android:dataExtractionRules'] = '@xml/data_extraction_rules';
 
+    // Full-color app icon in the expanded notification shade (small icon is the white silhouette).
+    if (!app['meta-data']) app['meta-data'] = [];
+    const largeIconName = 'expo.modules.notifications.large_notification_icon';
+    const existingLarge = app['meta-data'].find(
+      (m) => m.$ && m.$['android:name'] === largeIconName
+    );
+    if (existingLarge) {
+      existingLarge.$['android:resource'] = '@mipmap/ic_launcher';
+    } else {
+      app['meta-data'].push({
+        $: {
+          'android:name': largeIconName,
+          'android:resource': '@mipmap/ic_launcher',
+        },
+      });
+    }
+
     return cfg;
   });
 }

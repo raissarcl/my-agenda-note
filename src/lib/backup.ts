@@ -17,7 +17,10 @@ import {
   type Notebook,
 } from './notes';
 import { loadQuickReminders, saveAllQuickReminders } from './quickReminders';
-import { syncBackupReminderFromSettings } from './notifications';
+import {
+  syncBackupReminderFromSettings,
+  syncQuickReminderNotifications,
+} from './notifications';
 
 export async function buildExportBlob(): Promise<PersistedBlob> {
   const tasks = useTasksStore.getState().tasks;
@@ -149,7 +152,8 @@ export async function importBackup(
       notebooks: incomingNotebooks,
       notes: incomingNotes,
     });
-    await saveAllQuickReminders(incomingQuick);
+    const quickSynced = await syncQuickReminderNotifications(incomingQuick);
+    await saveAllQuickReminders(quickSynced);
     await useTasksStore.getState().rescheduleAll();
     return {
       ok: true,
@@ -187,7 +191,8 @@ export async function importBackup(
     localQuick,
     incomingQuick
   );
-  await saveAllQuickReminders(mergedQuick);
+  const quickSynced = await syncQuickReminderNotifications(mergedQuick);
+  await saveAllQuickReminders(quickSynced);
 
   return {
     ok: true,
